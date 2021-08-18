@@ -34,24 +34,33 @@ config.keyPair = new storj.KeyPair(config.networkPrivateKey);
 config.logger = new Logger(config.loggerVerbosity);
 config.maxShardSize = config.maxShardSize ? bytes.parse(config.maxShardSize) : null;
 
-if (config.S3 && config.S3.enabled) {
+if (config.fileStorageEnabled) {
   config.storageManager = new storj.StorageManager(
-    new storj.BucketStorageAdapter(config.storagePath, { ...config.S3, nodeID: config.keyPair.getNodeID() }),
+    new storj.FileStorageAdapter(config.storagePath),
     {
       maxCapacity: spaceAllocation,
       logger: config.logger
     }
   );
 } else {
-  config.storageManager = new storj.StorageManager(
-    new storj.EmbeddedStorageAdapter(config.storagePath),
-    {
-      maxCapacity: spaceAllocation,
-      logger: config.logger
-    }
-  );
+  if (config.S3 && config.S3.enabled) {
+    config.storageManager = new storj.StorageManager(
+      new storj.BucketStorageAdapter(config.storagePath, { ...config.S3, nodeID: config.keyPair.getNodeID() }),
+      {
+        maxCapacity: spaceAllocation,
+        logger: config.logger
+      }
+    );
+  } else {
+    config.storageManager = new storj.StorageManager(
+      new storj.EmbeddedStorageAdapter(config.storagePath),
+      {
+        maxCapacity: spaceAllocation,
+        logger: config.logger
+      }
+    );
+  }
 }
-
 
 const farmer = storj.Farmer(config);
 
